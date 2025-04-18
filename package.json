@@ -1,0 +1,29 @@
+{
+  "name": "acityhost-backend",
+  "version": "1.0.0",
+  "description": "This is the backend framework for acityHost",
+  "homepage": "https://github.com/JoelEkeng/acityHost-backend#readme",
+  "bugs": {
+    "url": "https://github.com/JoelEkeng/acityHost-backend/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JoelEkeng/acityHost-backend.git"
+  },
+  "license": "ISC",
+  "author": "Joel Ekeng",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "test": "node app.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "mongoose": "^8.13.2",
+    "pg": "^8.14.1"
+  }
+}
