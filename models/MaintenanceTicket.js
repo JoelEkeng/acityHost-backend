@@ -29,7 +29,7 @@ const MaintenanceTicketSchema = new mongoose.Schema({
   priority: {
     type: String,
     enum: ticketPriority,
-    default: 'Medium'
+    default: 'Low'
   },
   status: {
     type: String,
