@@ -28,11 +28,11 @@ app.get('/', (req, res) => {
 // User registration route
 app.post('/api/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email and password are required' });
+    const { fullName, email, password } = req.body;
+    if (!fullName || !email || !password) {
+      return res.status(400).json({ message: 'Name, email, and password are required' });
     }
-    const newUser = new User({ name, email, password });
+    const newUser = new User({ fullName, email, password });
     await newUser.save();
     res.status(201).json(newUser);
   } catch (error) {
