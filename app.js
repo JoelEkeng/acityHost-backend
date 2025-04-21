@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./db');
 const MaintenanceTicket = require('./models/MaintenanceTicket');
-const User = require('./routes/userRoutes');
+const User = require('./models/User'); // Changed from routes to models
+require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -11,32 +12,85 @@ const port = process.env.PORT || 5000;
 connectDB();
 
 // Middleware
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+const corsOptions = {
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
-}));
-
+};
+app.use(cors(corsOptions));
 app.use(express.json());
+
+// Authentication Middleware
+const authenticate = async (req, res, next) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ message: 'No token, authorization denied' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    req.user = user;
+    req.token = token;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Token is not valid' });
+  }
+};
+
+const authorize = (roles = []) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ message: 'Unauthorized access' });
+    }
+    next();
+  };
+};
 
 // Routes
 app.get('/', (req, res) => {
-  res.send('Acity Protected Route!');
+  res.send('Acity Hostel Management System API');
 });
 
 // User registration route
 app.post('/api/register', async (req, res) => {
   try {
     const { fullName, email, password } = req.body;
+    
     if (!fullName || !email || !password) {
-      return res.status(400).json({ message: 'Name, email, and password are required' });
+      return res.status(400).json({ message: 'All fields are required' });
     }
-    const newUser = new User({ fullName, email, password });
-    await newUser.save();
-    res.status(201).json(newUser);
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    const user = new User({ fullName, email, password });
+    await user.save();
+    
+    const token = user.generateAuthToken();
+    
+    res.status(201).json({ 
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role
+      },
+      token 
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: error.message });
+    }
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -44,71 +98,75 @@ app.post('/api/register', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
+
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
     const isMatch = await user.comparePassword(password);
-    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
     const token = user.generateAuthToken();
-    res.status(200).json({ token });
+    
+    res.status(200).json({ 
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role
+      },
+      token 
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Middleware to check authentication
-app.use((req, res, next) => {
-  const token = req.headers['authorization'];
-  if (!token) return res.status(401).json({ message: 'Unauthorized' });
-  // Verify token logic here
-  next();
-});
-// Middleware to check admin role
-app.use((req, res, next) => {
-  const userRole = req.user.role; // Assuming req.user is set after authentication
-  if (userRole !== 'admin') return res.status(403).json({ message: 'Forbidden' });
-  next();
-});
-// Middleware to check user role
-app.use((req, res, next) => {
-  const userRole = req.user.role; // Assuming req.user is set after authentication
-  if (userRole !== 'user') return res.status(403).json({ message: 'Forbidden' });
-  next();
-});
 
-// Ticket routes
+// Ticket routes with authentication
 app.route('/api/tickets')
-  .get(async (req, res) => {
+  .get(authenticate, async (req, res) => {
     try {
       const tickets = await MaintenanceTicket.find();
       res.json(tickets);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ message: 'Server error' });
     }
   })
-  .post(async (req, res) => {
+  .post(authenticate, async (req, res) => {
     try {
-      const newTicket = new MaintenanceTicket(req.body);
+      const newTicket = new MaintenanceTicket({
+        ...req.body,
+        createdBy: req.user.id // Track who created the ticket
+      });
       await newTicket.save();
       res.status(201).json(newTicket);
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      if (error.name === 'ValidationError') {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: 'Server error' });
     }
   });
 
 app.route('/api/tickets/:id')
-  .get(async (req, res) => {
+  .get(authenticate, async (req, res) => {
     try {
       const ticket = await MaintenanceTicket.findById(req.params.id);
       if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
       res.json(ticket);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ message: 'Server error' });
     }
   })
-  .put(async (req, res) => {
+  .put(authenticate, async (req, res) => {
     try {
       const ticket = await MaintenanceTicket.findByIdAndUpdate(
         req.params.id,
@@ -118,18 +176,44 @@ app.route('/api/tickets/:id')
       if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
       res.json(ticket);
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      if (error.name === 'ValidationError') {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: 'Server error' });
     }
   })
-  .delete(async (req, res) => {
+  .delete(authenticate, authorize(['admin']), async (req, res) => {
     try {
       const ticket = await MaintenanceTicket.findByIdAndDelete(req.params.id);
       if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
       res.json({ message: 'Ticket deleted successfully' });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ message: 'Server error' });
     }
   });
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({ 
+      message: 'Validation Error',
+      errors: err.errors 
+    });
+  }
+  
+  if (err.name === 'MongoError' && err.code === 11000) {
+    return res.status(400).json({ 
+      message: 'Duplicate key error',
+      field: Object.keys(err.keyPattern)[0]
+    });
+  }
+  
+  res.status(500).json({ 
+    message: 'Something went wrong on the server' 
+  });
+});
 
 // Start server
 app.listen(port, () => {
