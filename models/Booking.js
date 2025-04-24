@@ -9,3 +9,21 @@ const BookingSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+BookingSchema.virtual('id').get(function() {
+    return this._id.toHexString();
+});
+
+// Ensure virtual fields are serialized
+BookingSchema.set('toJSON', {
+    virtuals: true,
+    transform: (doc, ret) => {
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.__v;
+        return ret;
+    }
+});
+
+const Booking = mongoose.model('Booking', BookingSchema);
+module.exports = Booking;
