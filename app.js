@@ -190,7 +190,7 @@ app.route('/api/tickets/:id')
       res.status(500).json({ message: 'Server error' });
     }
   })
-  .delete(authorize(['admin']), async (req, res) => {
+  .delete(async (req, res) => {
     try {
       const ticket = await MaintenanceTicket.findByIdAndDelete(req.params.id);
       if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
