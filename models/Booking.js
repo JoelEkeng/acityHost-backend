@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const BookingSchema = new mongoose.Schema({
+const BookingSchema = new Schema({
     bookingDate: { type: Date, required: true },
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
