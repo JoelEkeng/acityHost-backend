@@ -1,9 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./db');
-const MaintenanceTicket = require('./models/MaintenanceTicket');
-const User = require('./models/User'); // Changed from routes to models
 require('dotenv').config();
+
+
+const MaintenanceTicket = require('./models/MaintenanceTicket');
+const User = require('./models/User'); 
+const Payment = require('./models/Payment');
+const MaintenanceLog = require('./models/MaintenanceLog');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -21,37 +25,37 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Authentication Middleware
-const authenticate = async (req, res, next) => {
-  try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return res.status(401).json({ message: 'No token, authorization denied' });
-    }
+// // Authentication Middleware
+// const authenticate = async (req, res, next) => {
+//   try {
+//     const token = req.header('Authorization')?.replace('Bearer ', '');
+//     if (!token) {
+//       return res.status(401).json({ message: 'No token, authorization denied' });
+//     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     const user = await User.findById(decoded.id);
     
-    if (!user) {
-      return res.status(401).json({ message: 'User not found' });
-    }
+//     if (!user) {
+//       return res.status(401).json({ message: 'User not found' });
+//     }
 
-    req.user = user;
-    req.token = token;
-    next();
-  } catch (error) {
-    res.status(401).json({ message: 'Token is not valid' });
-  }
-};
+//     req.user = user;
+//     req.token = token;
+//     next();
+//   } catch (error) {
+//     res.status(401).json({ message: 'Token is not valid' });
+//   }
+// };
 
-const authorize = (roles = []) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Unauthorized access' });
-    }
-    next();
-  };
-};
+// const authorize = (roles = []) => {
+//   return (req, res, next) => {
+//     if (!roles.includes(req.user.role)) {
+//       return res.status(403).json({ message: 'Unauthorized access' });
+//     }
+//     next();
+//   };
+// };
 
 // Routes
 app.get('/', (req, res) => {
@@ -120,7 +124,11 @@ app.post('/api/login', async (req, res) => {
         id: user.id,
         fullName: user.fullName,
         email: user.email,
-        role: user.role
+        role: user.role,
+        studentId: user.studentId,
+        roomNumber: user.roomNumber,
+        maintenanceLogs: user.maintenanceLogs,
+        paymentHistory: user.paymentHistory
       },
       token 
     });

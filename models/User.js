@@ -4,24 +4,17 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const UserSchema = new mongoose.Schema({
-    fullName: {
-        type: String,
-        required: true
-    },
-    email: {
-        type: String,
-        required: true,
-        unique: true
-    },
-    password: {
-        type: String,
-        required: true
-    },
-    role: {
-        type: String,
-        default: 'user'
-    }
-}, {
+    fullName: { type: String, required: true},
+    email: { type: String, required: true, unique: true},
+    password: { type: String, required: true},
+    studentId: { type: String, required: true },
+    roomNumber: { type: String, required: true},
+    MaintenanceTicket: [{ type: Schema.Types.ObjectId, ref: 'MaintenanceTicket' }],
+    maintenanceLogs: [{ type: Schema.Types.ObjectId, ref: 'MaintenanceLog' }],
+    paymentHistory: [{ type: Schema.Types.ObjectId, ref: 'Payment' }],
+    registrationDate: { type: Date, default: Date.now },
+    lastLogin: { type: Date, default: Date.now },
+    role: { type: String, default: 'user'}}, {
     timestamps: true 
 });
 
