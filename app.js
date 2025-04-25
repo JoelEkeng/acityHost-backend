@@ -227,10 +227,10 @@ app.route('/api/tickets/:id')
     };
     
     app.get('/api/me', authenticate, (req, res) => {
-      res.status(200).json(req.user); \
+      res.status(200).json(req.user); 
     });
 
-    
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
