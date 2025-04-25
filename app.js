@@ -42,7 +42,8 @@ app.get('/', (req, res) => {
 // User registration route
 app.post('/api/register', async (req, res) => {
   try {
-    const { fullName, email, password } = req.body;
+    const { fullName, password } = req.body;
+    const email = req.body.email?.trim().toLowerCase();
     
     if (!fullName || !email || !password) {
       return res.status(400).json({ message: 'All fields are required' });
@@ -79,7 +80,8 @@ app.post('/api/register', async (req, res) => {
 // User login route
 app.post('/api/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = req.body.email?.trim().toLowerCase();
     
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
