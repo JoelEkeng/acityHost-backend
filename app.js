@@ -53,7 +53,7 @@ app.post('/api/register', async (req, res) => {
     }
 
     const user = new Registration({ fullName, email, password });
-    await user.save();
+    await Registration.save();
     
     const token = Registration.generateAuthToken();
     
