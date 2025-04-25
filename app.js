@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./db');
 require('dotenv').config();
+const cookieParser = require('cookie-parser');
 
 
 const MaintenanceTicket = require('./models/MaintenanceTicket');
@@ -22,8 +23,11 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 };
+
+
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
 
 // Authentication Middleware
   // const authenticate = async (req, res, next) => {
@@ -114,6 +118,15 @@ app.post('/api/login', async (req, res) => {
 
     const token = user.generateAuthToken();
     
+          // Set cookie with secure options
+    res.cookie('token', token, {
+      httpOnly: true, // prevents JavaScript access to cookie
+      secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
+      sameSite: 'Lax', // adjust as needed ('Strict' or 'None' for cross-site)
+      maxAge: 24 * 60 * 60 * 1000 // 1 day
+    });
+    
+    
     res.status(200).json({ 
       user: {
         id: user.id,
@@ -195,6 +208,29 @@ app.route('/api/tickets/:id')
     }
   });
 
+  // const authenticate = async (req, res, next) => {
+    const authenticate = async (req, res, next) => {
+      try {
+        const token = req.cookies.token;
+        if (!token) return res.status(401).json({ message: 'Not authenticated' });
+    
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id).select('-password'); // exclude password
+    
+        if (!user) return res.status(401).json({ message: 'User not found' });
+    
+        req.user = user;
+        next();
+      } catch (err) {
+        res.status(401).json({ message: 'Invalid token' });
+      }
+    };
+    
+    app.get('/api/me', authenticate, (req, res) => {
+      res.status(200).json(req.user); \
+    });
+
+    
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
