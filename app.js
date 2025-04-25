@@ -18,7 +18,7 @@ connectDB();
 
 // Middleware
 const corsOptions = {
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+  origin: ["http://localhost:3000", "https://acity-hms.vercel.app", "*"],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
