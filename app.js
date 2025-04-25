@@ -18,7 +18,7 @@ connectDB();
 
 // Middleware
 const corsOptions = {
-  origin: ["http://localhost:3000", "https://acity-hms.vercel.app", "*"],
+  origin: ["http://localhost:3000", "https://acity-hms.vercel.app"],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
@@ -122,8 +122,9 @@ app.post('/api/login', async (req, res) => {
     // Set cookie with secure options
     res.cookie('token', token, {
       httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       sameSite: 'none', 
+      path: '/',
       maxAge: 24 * 60 * 60 * 1000 // 1 day
     });
     
@@ -211,36 +212,50 @@ app.route('/api/tickets/:id')
 
   // const authenticate = async (req, res, next) => {
   const authenticate = async (req, res, next) => {
-      try {
-        // 1. Try to get token from cookies
-        let token = req.cookies?.token;
+      console.log('Incoming cookies:', req.cookies);
+      console.log('Auth header:', req.headers.authorization);
     
-        // 2. If no token in cookies, check Authorization header
+      try {
+        // 1. Check cookies first
+        let token = req.cookies?.token;
+        
+        // 2. Fallback to Authorization header
         if (!token && req.headers.authorization?.startsWith('Bearer')) {
           token = req.headers.authorization.split(' ')[1];
+          console.log('Using header token');
         }
     
         if (!token) {
-          return res.status(401).json({ message: 'No token provided' });
+          console.log('No token found in cookies or headers');
+          return res.status(401).json({ message: 'Authentication required' });
         }
     
         // 3. Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findById(decoded.id).select('-password');
         
-        if (!user) return res.status(401).json({ message: 'User not found' });
+        if (!user) {
+          console.log('User not found for token');
+          return res.status(401).json({ message: 'User not found' });
+        }
     
-        // Attach user to request
         req.user = user;
         next();
       } catch (err) {
         console.error('Auth error:', err.message);
-        res.status(401).json({ message: 'Invalid token' });
+        
+        // Specific error messages
+        if (err.name === 'TokenExpiredError') {
+          return res.status(401).json({ message: 'Session expired' });
+        }
+        if (err.name === 'JsonWebTokenError') {
+          return res.status(401).json({ message: 'Invalid token' });
+        }
+        
+        res.status(401).json({ message: 'Authentication failed' });
       }
-    };
-    
-    
-    
+  };
+        
 app.get('/api/me', authenticate, (req, res) => {
     res.status(200).json(req.user); 
 });
