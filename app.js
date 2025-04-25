@@ -21,7 +21,8 @@ const corsOptions = {
   origin: ["http://localhost:3000", "https://acity-hms.vercel.app", "*"],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: true,
+  exposedHeaders: ['set-cookie']
 };
 
 
@@ -121,8 +122,8 @@ app.post('/api/login', async (req, res) => {
     // Set cookie with secure options
     res.cookie('token', token, {
       httpOnly: true, 
-      secure: true,
-      sameSite: 'Lax', 
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none', 
       maxAge: 24 * 60 * 60 * 1000 // 1 day
     });
     
