@@ -118,11 +118,11 @@ app.post('/api/login', async (req, res) => {
 
     const token = user.generateAuthToken();
     
-          // Set cookie with secure options
+    // Set cookie with secure options
     res.cookie('token', token, {
-      httpOnly: true, // prevents JavaScript access to cookie
-      secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
-      sameSite: 'Lax', // adjust as needed ('Strict' or 'None' for cross-site)
+      httpOnly: true, 
+      secure: true,
+      sameSite: 'Lax', 
       maxAge: 24 * 60 * 60 * 1000 // 1 day
     });
     
