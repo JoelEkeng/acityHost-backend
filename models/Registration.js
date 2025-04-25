@@ -64,5 +64,5 @@ RegistrationSchema.statics.checkUserRole = function(user, role) {
     }
 };
 
-const Registration = mongoose.model('User', RegistrationSchema);
+const Registration = mongoose.model('Registration', RegistrationSchema);
 module.exports = Registration;
