@@ -3,6 +3,7 @@ const cors = require('cors');
 const connectDB = require('./db');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 
 const MaintenanceTicket = require('./models/MaintenanceTicket');
 const User = require('./models/User'); 
@@ -22,7 +23,8 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json());
- 
+app.use(cookieParser());
+
 // const authorize = (roles = []) => {
 //   return (req, res, next) => {
 //     if (!roles.includes(req.user.role)) {
@@ -54,14 +56,15 @@ app.post('/api/register', async (req, res) => {
     const user = new User({ fullName, email, password });
     await user.save();
     
-    const token = User.generateAuthToken();
+    const token = user.generateAuthToken();
+
     
     res.status(201).json({ 
       user: {
-        id: User.id,
-        fullName: User.fullName,
-        email: User.email,
-        role: User.role
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role
       },
       token 
     });
