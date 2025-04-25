@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./db');
 require('dotenv').config();
-
+const jwt = require('jsonwebtoken');
 
 const MaintenanceTicket = require('./models/MaintenanceTicket');
 const User = require('./models/User'); 
@@ -24,30 +24,7 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json());
-
-// // Authentication Middleware
-// const authenticate = async (req, res, next) => {
-//   try {
-//     const token = req.header('Authorization')?.replace('Bearer ', '');
-//     if (!token) {
-//       return res.status(401).json({ message: 'No token, authorization denied' });
-//     }
-
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//     const user = await User.findById(decoded.id);
-    
-//     if (!user) {
-//       return res.status(401).json({ message: 'User not found' });
-//     }
-
-//     req.user = user;
-//     req.token = token;
-//     next();
-//   } catch (error) {
-//     res.status(401).json({ message: 'Token is not valid' });
-//   }
-// };
-
+ 
 // const authorize = (roles = []) => {
 //   return (req, res, next) => {
 //     if (!roles.includes(req.user.role)) {
@@ -119,6 +96,14 @@ app.post('/api/login', async (req, res) => {
 
     const token = user.generateAuthToken();
     
+      // Set cookie with secure options
+      res.cookie('token', token, {
+        httpOnly: true, // prevents JavaScript access to cookie
+        secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
+        sameSite: 'Lax', // adjust as needed ('Strict' or 'None' for cross-site)
+        maxAge: 24 * 60 * 60 * 1000 // 1 day
+      });
+
     res.status(200).json({ 
       user: {
         id: user.id,
@@ -199,6 +184,29 @@ app.route('/api/tickets/:id')
       res.status(500).json({ message: 'Server error' });
     }
   });
+
+  // const authenticate = async (req, res, next) => {
+    const authenticate = async (req, res, next) => {
+      try {
+        const token = req.cookies.token;
+        if (!token) return res.status(401).json({ message: 'Not authenticated' });
+    
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id).select('-password'); // exclude password
+    
+        if (!user) return res.status(401).json({ message: 'User not found' });
+    
+        req.user = user;
+        next();
+      } catch (err) {
+        res.status(401).json({ message: 'Invalid token' });
+      }
+    };
+    
+    app.get('/api/me', authenticate, (req, res) => {
+      res.status(200).json(req.user); // you can return more/less as needed
+    });
+    
 
 // Error handling middleware
 app.use((err, req, res, next) => {
