@@ -62,7 +62,7 @@ app.post('/api/register', async (req, res) => {
     
     res.status(201).json({ 
       user: {
-        id: user._id,
+        id: user.id,
         fullName: user.fullName,
         email: user.email,
         role: user.role
