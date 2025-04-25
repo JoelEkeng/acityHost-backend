@@ -6,7 +6,6 @@ const jwt = require('jsonwebtoken');
 
 const MaintenanceTicket = require('./models/MaintenanceTicket');
 const User = require('./models/User'); 
-const Registration = require('./models/Registration');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -47,22 +46,22 @@ app.post('/api/register', async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    const existingUser = await Registration.findOne({ email });
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const user = new Registration({ fullName, email, password });
-    await Registration.save();
+    const user = new User({ fullName, email, password });
+    await user.save();
     
-    const token = Registration.generateAuthToken();
+    const token = User.generateAuthToken();
     
     res.status(201).json({ 
       user: {
-        id: Registration.id,
-        fullName: Registration.fullName,
-        email: Registration.email,
-        role: Registration.role
+        id: User.id,
+        fullName: User.fullName,
+        email: User.email,
+        role: User.role
       },
       token 
     });
