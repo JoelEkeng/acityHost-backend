@@ -2,11 +2,12 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./db');
 require('dotenv').config();
-const jwt = require('jsonwebtoken');
-const cookieParser = require('cookie-parser');
+
 
 const MaintenanceTicket = require('./models/MaintenanceTicket');
 const User = require('./models/User'); 
+const Payment = require('./models/Payment');
+const MaintenanceLog = require('./models/MaintenanceLog');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -23,7 +24,24 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json());
-app.use(cookieParser());
+
+// Authentication Middleware
+  // const authenticate = async (req, res, next) => {
+  //   try {
+  //     const token = req.cookies.token;
+  //     if (!token) return res.status(401).json({ message: 'Not authenticated' });
+  
+  //     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  //     const user = await User.findById(decoded.id).select('-password'); // exclude password
+  
+  //     if (!user) return res.status(401).json({ message: 'User not found' });
+  
+  //     req.user = user;
+  //     next();
+  //   } catch (err) {
+  //     res.status(401).json({ message: 'Invalid token' });
+  //   }
+  // };
 
 // const authorize = (roles = []) => {
 //   return (req, res, next) => {
@@ -42,8 +60,7 @@ app.get('/', (req, res) => {
 // User registration route
 app.post('/api/register', async (req, res) => {
   try {
-    const { fullName, password } = req.body;
-    const email = req.body.email?.trim().toLowerCase();
+    const { fullName, email, password } = req.body;
     
     if (!fullName || !email || !password) {
       return res.status(400).json({ message: 'All fields are required' });
@@ -58,7 +75,6 @@ app.post('/api/register', async (req, res) => {
     await user.save();
     
     const token = user.generateAuthToken();
-
     
     res.status(201).json({ 
       user: {
@@ -80,8 +96,7 @@ app.post('/api/register', async (req, res) => {
 // User login route
 app.post('/api/login', async (req, res) => {
   try {
-    const { password } = req.body;
-    const email = req.body.email?.trim().toLowerCase();
+    const { email, password } = req.body;
     
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
@@ -99,14 +114,6 @@ app.post('/api/login', async (req, res) => {
 
     const token = user.generateAuthToken();
     
-      // Set cookie with secure options
-      res.cookie('token', token, {
-        httpOnly: true, // prevents JavaScript access to cookie
-        secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
-        sameSite: 'Lax', // adjust as needed ('Strict' or 'None' for cross-site)
-        maxAge: 24 * 60 * 60 * 1000 // 1 day
-      });
-
     res.status(200).json({ 
       user: {
         id: user.id,
@@ -187,29 +194,6 @@ app.route('/api/tickets/:id')
       res.status(500).json({ message: 'Server error' });
     }
   });
-
-  // const authenticate = async (req, res, next) => {
-    const authenticate = async (req, res, next) => {
-      try {
-        const token = req.cookies.token;
-        if (!token) return res.status(401).json({ message: 'Not authenticated' });
-    
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id).select('-password'); // exclude password
-    
-        if (!user) return res.status(401).json({ message: 'User not found' });
-    
-        req.user = user;
-        next();
-      } catch (err) {
-        res.status(401).json({ message: 'Invalid token' });
-      }
-    };
-    
-    app.get('/api/me', authenticate, (req, res) => {
-      res.status(200).json(req.user); // you can return more/less as needed
-    });
-    
 
 // Error handling middleware
 app.use((err, req, res, next) => {

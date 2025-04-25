@@ -9,7 +9,7 @@ const UserSchema = new Schema({
     email: { type: String, required: true, unique: true},
     password: { type: String, required: true},
     studentId: { type: String, required: false },
-    roomNumber: { type: String, required: false },
+    roomNumber: { type: String, required: false},
     MaintenanceTicket: [{ type: Schema.Types.ObjectId, ref: 'MaintenanceTicket' }],
     maintenanceLogs: [{ type: Schema.Types.ObjectId, ref: 'MaintenanceLog' }],
     paymentHistory: [{ type: Schema.Types.ObjectId, ref: 'Payment' }],
