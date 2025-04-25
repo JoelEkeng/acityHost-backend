@@ -3,7 +3,7 @@ const cors = require('cors');
 const connectDB = require('./db');
 require('dotenv').config();
 const cookieParser = require('cookie-parser');
-
+const jwt = require('jsonwebtoken');
 
 const MaintenanceTicket = require('./models/MaintenanceTicket');
 const User = require('./models/User'); 
@@ -209,25 +209,35 @@ app.route('/api/tickets/:id')
   });
 
   // const authenticate = async (req, res, next) => {
-const authenticate = async (req, res, next) => {
-    try {
-      console.log('Cookies:', req.cookies); // Log all cookies received
-      const token = req.cookies.token;
-      if (!token) return res.status(401).json({ message: 'No token provided' });
+  const authenticate = async (req, res, next) => {
+      try {
+        // 1. Try to get token from cookies
+        let token = req.cookies?.token;
     
-       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-       console.log('Decoded token:', decoded);
+        // 2. If no token in cookies, check Authorization header
+        if (!token && req.headers.authorization?.startsWith('Bearer')) {
+          token = req.headers.authorization.split(' ')[1];
+        }
     
-       const user = await User.findById(decoded.id).select('-password');
-       if (!user) return res.status(401).json({ message: 'User not found' });
+        if (!token) {
+          return res.status(401).json({ message: 'No token provided' });
+        }
     
-       req.user = user;
-       next();
-     } catch (err) {
-       console.error('Auth error:', err.message);
-       res.status(401).json({ message: 'Invalid token' });
-     }
-   };
+        // 3. Verify token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id).select('-password');
+        
+        if (!user) return res.status(401).json({ message: 'User not found' });
+    
+        // Attach user to request
+        req.user = user;
+        next();
+      } catch (err) {
+        console.error('Auth error:', err.message);
+        res.status(401).json({ message: 'Invalid token' });
+      }
+    };
+    
     
     
 app.get('/api/me', authenticate, (req, res) => {
