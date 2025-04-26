@@ -15,7 +15,7 @@ const UserSchema = new Schema({
     paymentHistory: [{ type: Schema.Types.ObjectId, ref: 'Payment' }],
     registrationDate: { type: Date, default: Date.now },
     lastLogin: { type: Date, default: Date.now },
-    role: { type: String, default: 'user'}}, {
+    role: { type: String, enum: ['user', 'admin'], default: 'user'}}, {
     timestamps: true 
 });
 
