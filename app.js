@@ -197,7 +197,7 @@ app.route('/api/tickets')
 
       await User.findByIdAndUpdate(
         req.user.id,
-        { $push: { maintenanceLog: savedTicket._id } },
+        { $push: { maintenanceLogs: savedTicket._id } },
         { new: true }
       );
 
