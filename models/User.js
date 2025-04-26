@@ -11,7 +11,7 @@ const UserSchema = new Schema({
     studentId: { type: String, required: false },
     roomNumber: { type: String, required: false},
     MaintenanceTicket: [{ type: Schema.Types.ObjectId, ref: 'MaintenanceTicket' }],
-    maintenanceLogs: [{ type: Schema.Types.ObjectId, ref: 'MaintenanceLog' }],
+    maintenanceLogs: [{ type: Schema.Types.ObjectId, ref: 'MaintenanceTicket' }],
     paymentHistory: [{ type: Schema.Types.ObjectId, ref: 'Payment' }],
     registrationDate: { type: Date, default: Date.now },
     lastLogin: { type: Date, default: Date.now },
