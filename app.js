@@ -197,7 +197,7 @@ app.route('/api/tickets')
 
       await User.findByIdAndUpdate(
         req.user.id,
-        { $push: { maintenanceLogs: savedTicket._id } },
+        { $push: { maintenanceLog: savedTicket._id } },
         { new: true }
       );
 
@@ -248,7 +248,7 @@ app.route('/api/tickets/:id')
  
 app.get('/api/me', authenticate, async (req, res) => {
   try{
-    const user = await User.findById(req.user.id).select('-password').populate('maintenanceLogs');
+    const user = await User.findById(req.user.id).select('-password').populate('maintenanceLog');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
