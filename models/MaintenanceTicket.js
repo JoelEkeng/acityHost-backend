@@ -5,7 +5,7 @@ const ticketStatus = ['Open', 'In Progress', 'Resolved', 'Escalated'];
 const ticketPriority = ['Low', 'Medium', 'High'];
 
 const MaintenanceTicketSchema = new Schema({
-  studentId: { type: String, required: true},
+  studentId: { type: String, required: false},
   roomNumber: { type: String, required: true},
   title: { type: String, required: true, trim: true},
   description: { type: String, required: true},
