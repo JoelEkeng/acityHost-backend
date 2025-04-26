@@ -1,3 +1,4 @@
+const MaintenanceLog = require('../models/MaintenanceLog');
 const User = require('../models/User');
 
 exports.getMe = async (req, res) => {
@@ -13,4 +14,4 @@ exports.getMe = async (req, res) => {
     console.error('Error fetching user:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
-};
+};    
