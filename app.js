@@ -246,18 +246,23 @@ app.route('/api/tickets/:id')
     }
   });
  
-app.get('/api/me', authenticate, async (req, res) => {
-  try{
-    const user = await User.findById(req.user.id).select('-password').populate('maintenanceLog');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+  app.get('/api/me', authenticate, async (req, res) => {
+    try {
+      const user = await User.findById(req.user.id)
+        .select('-password')
+        .populate('maintenanceLog'); 
+  
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      res.status(200).json(user); 
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      res.status(500).json({ message: 'Server error' });
     }
-    res.status(200).json(req.user);
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+  });
+  
 
 
 // Error handling middleware
