@@ -23,4 +23,13 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-module.exports = { authenticate };
+const authorizeRoles = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ message: `Role (${req.user.role}) not authorized` });
+    }
+    next();
+  };
+};
+
+module.exports = { authenticate, authorizeRoles };
