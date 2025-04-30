@@ -24,7 +24,7 @@ app.use(cookieParser());
 app.use('/api', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', ticketRoutes);
-app.use('/api/rooms', roomRoutes);
+app.use('/api', roomRoutes);
 
 app.get('/', (req, res) => {
   res.send('ACity Hostel Management System API is running.');
