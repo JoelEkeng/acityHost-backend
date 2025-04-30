@@ -80,3 +80,30 @@ exports.createBulkRooms = async (req, res) => {
     res.status(500).json({ message: error.message || 'Server error during bulk room creation' });
   }
 };
+
+
+exports.updateRoomDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { roomType, roomFacilities } = req.body;
+
+    if (!roomType && !roomFacilities) {
+      return res.status(400).json({ message: 'Provide at least roomType or roomFacilities to update' });
+    }
+
+    const updates = {};
+    if (roomType) updates.roomType = roomType;
+    if (roomFacilities) updates.roomFacilities = roomFacilities;
+
+    const updatedRoom = await Room.findByIdAndUpdate(id, updates, { new: true });
+
+    if (!updatedRoom) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+
+    res.status(200).json({ message: 'Room updated successfully', room: updatedRoom });
+  } catch (error) {
+    console.error('Error updating room:', error);
+    res.status(500).json({ message: 'Server error while updating room' });
+  }
+};
