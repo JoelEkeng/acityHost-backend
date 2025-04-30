@@ -48,7 +48,7 @@ UserSchema.methods.comparePassword = async function(password) {
 
 // Middleware to generate JWT token
 UserSchema.methods.generateAuthToken = function() {
-    const token = jwt.sign({ id: this._id, role: this.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: this._id, role: this.role }, process.env.JWT_SECRET);
     return token;
 };
 
