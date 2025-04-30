@@ -1,0 +1,58 @@
+const Room = require('../models/Room');
+const User = require('../models/User');
+
+
+exports.getRooms = async (req, res) => {
+    try {
+        const rooms = await Room.find().populate('currentOccupant', 'fullName email');
+        res.json(rooms);
+      } catch (err) {
+        console.error('Error fetching rooms:', err);
+        res.status(500).json({ message: 'Server error while fetching rooms' });
+      }
+}
+exports.createRoom = async (req, res) => {
+    try {
+        const { roomId, roomNumber, wing, floor, roomType, roomFacilities, status, building } = req.body;
+
+        // Check if the room already exists
+        const existingRoom = await Room.findOne({ roomId });
+        if (existingRoom) {
+            return res.status(400).json({ message: 'Room already exists' });
+        }
+
+        // Create a new room
+        const newRoom = new Room({
+            roomId,
+            roomNumber,
+            wing,
+            floor,
+            roomType,
+            roomFacilities,
+            status,
+            building
+        });
+
+        const savedRoom = await newRoom.save();
+        res.status(201).json(savedRoom);
+    } catch (error) {
+        console.error('Error creating room:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+}
+
+exports.createBulkRooms = async (req, res) => {
+    try {
+      const { rooms } = req.body;
+  
+      if (!rooms || !Array.isArray(rooms)) {
+        return res.status(400).json({ message: 'Invalid rooms data' });
+      }
+  
+      const createdRooms = await Room.insertMany(rooms);
+      res.status(201).json({ message: `${createdRooms.length} rooms created`, rooms: createdRooms });
+    } catch (error) {
+      console.error('Bulk room creation error:', error);
+      res.status(500).json({ message: 'Server error while creating rooms' });
+    }
+  };

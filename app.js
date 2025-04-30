@@ -7,6 +7,7 @@ const connectDB = require('./db');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
+const roomRoutes = require('./routes/roomRoutes');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -23,6 +24,7 @@ app.use(cookieParser());
 app.use('/api', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', ticketRoutes);
+app.use('/api/rooms', roomRoutes);
 
 app.get('/', (req, res) => {
   res.send('ACity Hostel Management System API is running.');
