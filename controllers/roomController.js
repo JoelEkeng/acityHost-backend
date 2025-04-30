@@ -42,17 +42,41 @@ exports.createRoom = async (req, res) => {
 }
 
 exports.createBulkRooms = async (req, res) => {
-    try {
-      const { rooms } = req.body;
-  
-      if (!rooms || !Array.isArray(rooms)) {
-        return res.status(400).json({ message: 'Invalid rooms data' });
-      }
-  
-      const createdRooms = await Room.insertMany(rooms);
-      res.status(201).json({ message: `${createdRooms.length} rooms created`, rooms: createdRooms });
-    } catch (error) {
-      console.error('Bulk room creation error:', error);
-      res.status(500).json({ message: 'Server error while creating rooms' });
+  try {
+    const { rooms } = req.body;
+
+    if (!rooms || !Array.isArray(rooms) || rooms.length === 0) {
+      return res.status(400).json({ message: 'No rooms provided or invalid format' });
     }
-  };
+
+    // Generate roomId and validate fields
+    const formattedRooms = rooms.map((room) => {
+      const { roomNumber, floor, wing, roomType, roomFacilities, status, building } = room;
+
+      if (!roomNumber || !floor || !wing || !roomType || !roomFacilities || !building) {
+        throw new Error('Missing required fields in room entry');
+      }
+
+      return {
+        roomNumber,
+        floor,
+        wing,
+        roomType,
+        roomFacilities,
+        building,
+        status: status || 'Available',
+        roomId: `${floor}${roomNumber}-${wing}`
+      };
+    });
+
+    const createdRooms = await Room.insertMany(formattedRooms, { ordered: false });
+
+    res.status(201).json({
+      message: `${createdRooms.length} rooms created successfully`,
+      rooms: createdRooms
+    });
+  } catch (error) {
+    console.error('Bulk room creation error:', error);
+    res.status(500).json({ message: error.message || 'Server error during bulk room creation' });
+  }
+};
