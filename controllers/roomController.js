@@ -13,7 +13,7 @@ exports.getRooms = async (req, res) => {
 }
 exports.createRoom = async (req, res) => {
     try {
-        const { roomId, roomNumber, wing, floor, roomType, roomFacilities, status, building } = req.body;
+        const { roomId, roomNumber, wing, floor, roomType, roomFacilities, status, hostel } = req.body;
 
         // Check if the room already exists
         const existingRoom = await Room.findOne({ roomId });
@@ -50,9 +50,9 @@ exports.createBulkRooms = async (req, res) => {
 
     // Generate roomId and validate fields
     const formattedRooms = rooms.map((room) => {
-      const { roomNumber, floor, wing, roomType, roomFacilities, status, building } = room;
+      const { roomNumber, floor, wing, roomType, roomFacilities, status, hostel } = room;
 
-      if (!roomNumber || !floor || !wing || !roomType || !roomFacilities || !building) {
+      if (!roomNumber || !floor || !wing || !roomType || !roomFacilities || !hostel) {
         throw new Error('Missing required fields in room entry');
       }
 
