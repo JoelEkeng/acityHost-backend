@@ -7,6 +7,7 @@ const connectDB = require('./db');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
+const hostelRoutes = require('./routes/hostelRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 
 const app = express();
@@ -24,6 +25,7 @@ app.use(cookieParser());
 app.use('/api', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', ticketRoutes);
+app.use('/api', hostelRoutes);
 app.use('/api', roomRoutes);
 
 app.get('/', (req, res) => {
