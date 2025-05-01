@@ -23,14 +23,13 @@ exports.createRoom = async (req, res) => {
 
         // Create a new room
         const newRoom = new Room({
-            roomId,
             roomNumber,
             wing,
             floor,
             roomType,
             roomFacilities,
             status,
-            building
+            hostel,
         });
 
         const savedRoom = await newRoom.save();
@@ -63,7 +62,7 @@ exports.createBulkRooms = async (req, res) => {
         wing,
         roomType,
         roomFacilities,
-        building,
+        hostel,
         status: status || 'Available',
         roomId: `${floor}${roomNumber}-${wing}`
       };
