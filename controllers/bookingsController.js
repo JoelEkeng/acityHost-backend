@@ -4,7 +4,7 @@ const Booking = require('../models/Booking');
 exports.createBooking = async (req, res) => {
   try {
     const {
-      rollNumber, // this is the string like "10211100294"
+      rollNumber, 
       roomId,
       bookingDate,
       startTime,
@@ -22,9 +22,14 @@ exports.createBooking = async (req, res) => {
       return res.status(404).json({ message: 'User not found with that roll number' });
     }
 
+    const room = await Room.findOne({ roomId });
+    if (!room) {
+      return res.status(404).json({ message: `Room ${roomId} not found` });
+    }
+
     const booking = new Booking({
       rollNumber: user._id,
-      roomId,
+      roomId: room._id,
       bookingDate,
       startTime,
       endTime,

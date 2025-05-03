@@ -1,56 +1,64 @@
 const Room = require('../models/Room');
 const User = require('../models/User');
 
-
 exports.getRooms = async (req, res) => {
-    try {
-        const rooms = await Room.find().populate('currentOccupant', 'fullName email');
-        res.json(rooms);
-      } catch (err) {
-        console.error('Error fetching rooms:', err);
-        res.status(500).json({ message: 'Server error while fetching rooms' });
-      }
-}
+  try {
+    const rooms = await Room.find().populate('currentOccupant', 'fullName email');
+    res.status(200).json(rooms);
+  } catch (err) {
+    console.error('Error fetching rooms:', err);
+    res.status(500).json({ message: 'Server error while fetching rooms' });
+  }
+};
+
 exports.createRoom = async (req, res) => {
-    try {
-        const { roomId, roomNumber, wing, floor, roomType, roomFacilities, status, hostel } = req.body;
+  try {
+    const {
+      roomNumber,
+      wing,
+      floor,
+      roomType,
+      roomFacilities,
+      status = 'Available',
+      hostel
+    } = req.body;
 
-        // Check if the room already exists
-        const existingRoom = await Room.findOne({ roomId });
-        if (existingRoom) {
-            return res.status(400).json({ message: 'Room already exists' });
-        }
+    const roomId = `${floor}${roomNumber}-${wing}`;
 
-        // Create a new room
-        const newRoom = new Room({
-            roomNumber,
-            wing,
-            floor,
-            roomType,
-            roomFacilities,
-            status,
-            hostel,
-        });
-
-        const savedRoom = await newRoom.save();
-        res.status(201).json(savedRoom);
-    } catch (error) {
-        console.error('Error creating room:', error);
-        res.status(500).json({ message: 'Server error' });
+    const existingRoom = await Room.findOne({ roomId });
+    if (existingRoom) {
+      return res.status(400).json({ message: 'Room already exists with ID ' + roomId });
     }
-}
+
+    const newRoom = new Room({
+      roomNumber,
+      wing,
+      floor,
+      roomType,
+      roomFacilities,
+      status,
+      hostel,
+      roomId
+    });
+
+    const savedRoom = await newRoom.save();
+    res.status(201).json(savedRoom);
+  } catch (error) {
+    console.error('Error creating room:', error);
+    res.status(500).json({ message: 'Server error while creating room' });
+  }
+};
 
 exports.createBulkRooms = async (req, res) => {
   try {
     const { rooms } = req.body;
 
-    if (!rooms || !Array.isArray(rooms) || rooms.length === 0) {
+    if (!Array.isArray(rooms) || rooms.length === 0) {
       return res.status(400).json({ message: 'No rooms provided or invalid format' });
     }
 
-    // Generate roomId and validate fields
-    const formattedRooms = rooms.map((room) => {
-      const { roomNumber, floor, wing, roomType, roomFacilities, status, hostel } = room;
+    const formattedRooms = rooms.map(room => {
+      const { roomNumber, floor, wing, roomType, roomFacilities, status = 'Available', hostel } = room;
 
       if (!roomNumber || !floor || !wing || !roomType || !roomFacilities || !hostel) {
         throw new Error('Missing required fields in room entry');
@@ -63,7 +71,7 @@ exports.createBulkRooms = async (req, res) => {
         roomType,
         roomFacilities,
         hostel,
-        status: status || 'Available',
+        status,
         roomId: `${floor}${roomNumber}-${wing}`
       };
     });
@@ -79,7 +87,6 @@ exports.createBulkRooms = async (req, res) => {
     res.status(500).json({ message: error.message || 'Server error during bulk room creation' });
   }
 };
-
 
 exports.updateRoomDetails = async (req, res) => {
   try {
