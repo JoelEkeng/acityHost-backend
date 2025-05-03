@@ -5,7 +5,7 @@ const BookingSchema = new Schema({
   bookingDate: { type: Date, required: true },
   startTime: { type: Date, required: true },
   endTime: { type: Date, required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room', required: true },
   bedPosition: { type: String, enum: ['Top', 'Bottom'], required: function() {
     return this.roomType === 'Double';
