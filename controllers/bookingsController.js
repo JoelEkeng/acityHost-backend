@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Booking = require('../models/Booking');
+const Room = require('../models/Room');
 
 exports.createBooking = async (req, res) => {
   try {
