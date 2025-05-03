@@ -23,7 +23,7 @@ exports.createBooking = async (req, res) => {
       return res.status(404).json({ message: 'User not found with that roll number' });
     }
 
-    const room = await Room.findOne({ roomId });
+    const room = await Room.findById(roomId);
     if (!room) {
       return res.status(404).json({ message: `Room ${roomId} not found` });
     }
@@ -40,18 +40,25 @@ exports.createBooking = async (req, res) => {
 
     await booking.save();
 
+    user.currentBooking = booking._id;
+    user.previousBookings.push(booking._id);
+    await user.save();
+
+    const populatedBooking = await Booking.findById(booking._id)
+      .populate('roomId', 'roomNumber floor wing roomType roomFacilities')
+      .populate('rollNumber', 'name email rollNumber');
+
     res.status(201).json(booking);
   } catch (err) {
     console.error('Error creating booking:', err);
     res.status(500).json({ message: 'Server error creating booking' });
   }
 };
-
 exports.getAllBookings = async (req, res) => {
     try {
         const bookingsList = await bookings.find();
         res.json(bookingsList);
-    } catch (err) {
+    } catch (err) { 
         res.status(500).json({ message: 'Server error fetching bookings' });
     }
 }

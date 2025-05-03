@@ -28,6 +28,15 @@ const UserSchema = new Schema({
   registrationDate: { type: Date, default: Date.now },
   lastLogin: { type: Date, default: Date.now },
 
+  currentBooking: {
+    type: Schema.Types.ObjectId,
+    ref: 'Booking'
+  },
+  previousBookings: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Booking'
+  }],
+
   role: { type: String, enum: ['user', 'admin'], default: 'user' }
 }, {
   timestamps: true 

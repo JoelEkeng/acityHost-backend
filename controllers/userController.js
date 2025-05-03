@@ -8,6 +8,15 @@ exports.getMe = async (req, res) => {
       .populate({
         path: 'maintenanceLogs',
         select: 'title category priority status roomNumber createdAt updatedAt',
+      })
+      .populate({
+        path: 'currentBooking',
+        populate: [
+          {
+            path: 'roomId',
+            select: 'roomNumber floor wing roomType roomFacilities'
+          }
+        ] 
       });
 
     if (!user) {
