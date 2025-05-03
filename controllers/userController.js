@@ -11,12 +11,12 @@ exports.getMe = async (req, res) => {
       })
       .populate({
         path: 'currentBooking',
-        populate: [
+        populate: 
           {
             path: 'roomId',
             select: 'roomNumber floor wing roomType roomFacilities'
           }
-        ] 
+        
       });
 
     if (!user) {

@@ -49,6 +49,7 @@ exports.createBooking = async (req, res) => {
       .populate('rollNumber', 'name email rollNumber');
 
     res.status(201).json(booking);
+    res.status(201).json(populatedBooking);
   } catch (err) {
     console.error('Error creating booking:', err);
     res.status(500).json({ message: 'Server error creating booking' });
