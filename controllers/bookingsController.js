@@ -28,6 +28,24 @@ exports.createBooking = async (req, res) => {
       return res.status(404).json({ message: `Room ${roomId} not found` });
     }
 
+    if (room.roomType === 'Double') {
+      if (!bedPosition) {
+        return res.status(400).json({ message: 'Bed position required for double rooms' });
+      }
+
+    // Check specific bed availability
+    if (bedPosition === 'Top' && !room.beds.top) {
+      return res.status(400).json({ message: 'Top bed already booked' });
+      }
+      if (bedPosition === 'Bottom' && !room.beds.bottom) {
+        return res.status(400).json({ message: 'Bottom bed already booked' });
+      }
+    } 
+    // For single rooms
+    else if (!room.beds.top) { // Using top bed to represent single room availability
+      return res.status(400).json({ message: 'Room already booked' });
+    }  
+
     const booking = new Booking({
       rollNumber: user._id,
       roomId: room._id,
@@ -47,6 +65,17 @@ exports.createBooking = async (req, res) => {
     const populatedBooking = await Booking.findById(booking._id)
       .populate('roomId', 'roomNumber floor wing roomType roomFacilities')
       .populate('rollNumber', 'name email rollNumber');
+
+    // Update room availability
+    if (room.roomType === 'Double') {
+      await Room.findByIdAndUpdate(roomId, {
+        $set: { [`beds.${bedPosition.toLowerCase()}`]: false }
+      });
+    } else {
+      await Room.findByIdAndUpdate(roomId, {
+        $set: { 'beds.top': false }
+      });
+    } 
 
     res.status(201).json(booking);
     res.status(201).json(populatedBooking);

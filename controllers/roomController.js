@@ -113,3 +113,13 @@ exports.updateRoomDetails = async (req, res) => {
     res.status(500).json({ message: 'Server error while updating room' });
   }
 };
+
+exports.getRoomAvailability = async (req, res) => {
+  try {
+    const rooms = await Room.find()
+      .select('roomNumber floor wing roomType roomFacilities beds');
+    res.json(rooms);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
