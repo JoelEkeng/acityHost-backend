@@ -3,7 +3,12 @@ const User = require('../models/User');
 
 exports.getRooms = async (req, res) => {
   try {
-    const rooms = await Room.find().populate('currentOccupant', 'fullName email');
+    // const rooms = await Room.find().populate('currentOccupant', 'fullName email');
+    const rooms = await Room.find()
+    /* .select('roomNumber floor wing roomType roomFacilities beds') */
+    .select('roomNumber floor wing roomType roomFacilities beds status hostel roomId')
+    .populate('currentOccupant', 'fullName email');
+  // res.json(rooms);
     res.status(200).json(rooms);
   } catch (err) {
     console.error('Error fetching rooms:', err);
