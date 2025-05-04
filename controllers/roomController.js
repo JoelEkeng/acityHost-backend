@@ -7,15 +7,7 @@ exports.getRooms = async (req, res) => {
     const rooms = await Room.find()
     /* .select('roomNumber floor wing roomType roomFacilities beds') */
     .select('roomNumber floor wing roomType roomFacilities beds status hostel roomId')
-    // .populate('currentOccupant', 'fullName email');
-    /* .populate({
-      path: 'currentOccupant',
-      select: 'fullName email rollNumber roomNumber floor wing roomType roomFacilities beds status hostel roomId'
-    }) */
-    .populate({
-      path: 'hostel',
-      select: 'name'
-    });
+    .populate('currentOccupant', 'fullName email');
   // res.json(rooms);
     res.status(200).json(rooms);
   } catch (err) {
