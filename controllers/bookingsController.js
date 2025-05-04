@@ -62,22 +62,25 @@ exports.createBooking = async (req, res) => {
     user.previousBookings.push(booking._id);
     await user.save();
 
+    // Update room with current occupant and bed status
+    const updateData = {
+      currentOccupant: user._id
+    };
+
+    if (room.roomType === 'Double') {
+      updateData[`beds.${bedPosition.toLowerCase()}`] = false;
+    } else {
+      updateData['beds.top'] = false;
+    }
+
+    await Room.findByIdAndUpdate(roomId, {
+      $set: updateData
+    });
+
     const populatedBooking = await Booking.findById(booking._id)
       .populate('roomId', 'roomNumber floor wing roomType roomFacilities')
       .populate('rollNumber', 'name email rollNumber');
 
-    // Update room availability
-    if (room.roomType === 'Double') {
-      await Room.findByIdAndUpdate(roomId, {
-        $set: { [`beds.${bedPosition.toLowerCase()}`]: false }
-      });
-    } else {
-      await Room.findByIdAndUpdate(roomId, {
-        $set: { 'beds.top': false }
-      });
-    } 
-
-    res.status(201).json(booking);
     res.status(201).json(populatedBooking);
   } catch (err) {
     console.error('Error creating booking:', err);
