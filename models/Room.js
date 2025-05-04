@@ -21,8 +21,14 @@ const roomSchema = new Schema({
     bookings: [{ type: Schema.Types.ObjectId, ref: 'Booking' }],
     hostel: { type: Schema.Types.ObjectId, ref: 'Hostel', required: true },
     beds: {
-      top: { type: Boolean, default: true }, // true = available
-      bottom: { type: Boolean, default: true }
+      top: {
+        available: Boolean,
+        occupant: { type: Schema.Types.ObjectId, ref: 'User' }
+      },
+      bottom: {
+        available: Boolean,
+        occupant: { type: Schema.Types.ObjectId, ref: 'User' }
+      }
     },
   }, {
     timestamps: true,
