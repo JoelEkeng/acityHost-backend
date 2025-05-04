@@ -10,7 +10,7 @@ exports.getRooms = async (req, res) => {
     // .populate('currentOccupant', 'fullName email');
     .populate({
       path: 'currentOccupant',
-      select: 'fullName email rollNumber'
+      select: 'fullName email rollNumber roomNumber floor wing roomType roomFacilities beds status hostel roomId'
     })
     .populate({
       path: 'hostel',
