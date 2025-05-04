@@ -2,162 +2,88 @@ const User = require('../models/User');
 const Booking = require('../models/Booking');
 const Room = require('../models/Room');
 
-// exports.createBooking = async (req, res) => {
-//   try {
-//     const {
-//       rollNumber, 
-//       roomId,
-//       bookingDate,
-//       startTime,
-//       endTime,
-//       bedPosition,
-//       payment
-//     } = req.body;
-
-//     if (!roomId) {
-//       return res.status(400).json({ message: 'roomId is required' });
-//     }
-
-//     const user = await User.findOne({ rollNumber });
-//     if (!user) {
-//       return res.status(404).json({ message: 'User not found with that roll number' });
-//     }
-
-//     const room = await Room.findById(roomId);
-//     if (!room) {
-//       return res.status(404).json({ message: `Room ${roomId} not found` });
-//     }
-
-//     if (room.roomType === 'Double') {
-//       if (!bedPosition) {
-//         return res.status(400).json({ message: 'Bed position required for double rooms' });
-//       }
-
-//     // Check specific bed availability
-//     if (bedPosition === 'Top' && !room.beds.top) {
-//       return res.status(400).json({ message: 'Top bed already booked' });
-//       }
-//       if (bedPosition === 'Bottom' && !room.beds.bottom) {
-//         return res.status(400).json({ message: 'Bottom bed already booked' });
-//       }
-//     } 
-//     // For single rooms
-//     else if (!room.beds.top) { // Using top bed to represent single room availability
-//       return res.status(400).json({ message: 'Room already booked' });
-//     }  
-
-//     const booking = new Booking({
-//       rollNumber: user._id,
-//       roomId: room._id,
-//       bookingDate,
-//       startTime,
-//       endTime,
-//       bedPosition,
-//       payment
-//     });
-
-//     await booking.save();
-
-//     user.currentBooking = booking._id;
-//     user.previousBookings.push(booking._id);
-//     await user.save();
-
-//     // Update room with current occupant and bed status
-//     const updateData = {
-//       currentOccupant: user._id
-//     };
-
-//     if (room.roomType === 'Double') {
-//       updateData[`beds.${bedPosition.toLowerCase()}`] = false;
-//     } else {
-//       updateData['beds.top'] = false;
-//     }
-
-//     await Room.findByIdAndUpdate(roomId, {
-//       $set: updateData
-//     });
-
-//     const populatedBooking = await Booking.findById(booking._id)
-//       .populate('roomId', 'roomNumber floor wing roomType roomFacilities')
-//       .populate('rollNumber', 'name email rollNumber');
-
-//     res.status(201).json(populatedBooking);
-//   } catch (err) {
-//     console.error('Error creating booking:', err);
-//     res.status(500).json({ message: 'Server error creating booking' });
-//   }
-// };
-
 exports.createBooking = async (req, res) => {
   try {
-    const { rollNumber, roomId, bedPosition, ...bookingData } = req.body;
+    const {
+      rollNumber, 
+      roomId,
+      bookingDate,
+      startTime,
+      endTime,
+      bedPosition,
+      payment
+    } = req.body;
 
-    // Validate required fields
-    if (!roomId) return res.status(400).json({ message: 'roomId is required' });
-
-    // Find user and room
-    const user = await User.findOne({ rollNumber });
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    const room = await Room.findById(roomId);
-    if (!room) return res.status(404).json({ message: 'Room not found' });
-
-    // Check availability
-    if (room.roomType === 'Double') {
-      if (!bedPosition) return res.status(400).json({ message: 'Bed position required' });
-      
-      const bedKey = bedPosition.toLowerCase();
-      if (!room.beds[bedKey].available) {
-        return res.status(400).json({ message: `${bedPosition} bed already booked` });
-      }
-    } else if (!room.beds.top.available) {
-      return res.status(400).json({ message: 'Room already booked' });
+    if (!roomId) {
+      return res.status(400).json({ message: 'roomId is required' });
     }
 
-    // Create booking
+    const user = await User.findOne({ rollNumber });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found with that roll number' });
+    }
+
+    const room = await Room.findById(roomId);
+    if (!room) {
+      return res.status(404).json({ message: `Room ${roomId} not found` });
+    }
+
+    if (room.roomType === 'Double') {
+      if (!bedPosition) {
+        return res.status(400).json({ message: 'Bed position required for double rooms' });
+      }
+
+    // Check specific bed availability
+    if (bedPosition === 'Top' && !room.beds.top) {
+      return res.status(400).json({ message: 'Top bed already booked' });
+      }
+      if (bedPosition === 'Bottom' && !room.beds.bottom) {
+        return res.status(400).json({ message: 'Bottom bed already booked' });
+      }
+    } 
+    // For single rooms
+    else if (!room.beds.top) { // Using top bed to represent single room availability
+      return res.status(400).json({ message: 'Room already booked' });
+    }  
+
     const booking = new Booking({
       rollNumber: user._id,
       roomId: room._id,
+      bookingDate,
+      startTime,
+      endTime,
       bedPosition,
-      ...bookingData
+      payment
     });
 
     await booking.save();
 
-    // Update user
     user.currentBooking = booking._id;
     user.previousBookings.push(booking._id);
     await user.save();
 
-    // Update room
-    const updateData = {};
+    // Update room with current occupant and bed status
+    const updateData = {
+      currentOccupant: user._id
+    };
+
     if (room.roomType === 'Double') {
-      const bedKey = bedPosition.toLowerCase();
-      updateData[`beds.${bedKey}.available`] = false;
-      updateData[`beds.${bedKey}.occupant`] = user._id;
-      
-      // Update room status if fully booked
-      if (!room.beds.top.available && !room.beds.bottom.available) {
-        updateData.status = 'Booked';
-      } else {
-        updateData.status = 'Partially Booked';
-      }
+      updateData[`beds.${bedPosition.toLowerCase()}`] = false;
     } else {
-      updateData['beds.top.available'] = false;
-      updateData.currentOccupant = user._id;
-      updateData.status = 'Booked';
+      updateData['beds.top'] = false;
     }
 
-    await Room.findByIdAndUpdate(roomId, { $set: updateData });
+    await Room.findByIdAndUpdate(roomId, {
+      $set: updateData
+    });
 
-    // Return populated booking
     const populatedBooking = await Booking.findById(booking._id)
-      .populate('roomId')
-      .populate('rollNumber', 'fullName email rollNumber');
+      .populate('roomId', 'roomNumber floor wing roomType roomFacilities')
+      .populate('rollNumber', 'name email rollNumber');
 
     res.status(201).json(populatedBooking);
   } catch (err) {
-    console.error('Booking error:', err);
+    console.error('Error creating booking:', err);
     res.status(500).json({ message: 'Server error creating booking' });
   }
 };
