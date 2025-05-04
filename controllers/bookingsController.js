@@ -18,6 +18,7 @@ exports.createBooking = async (req, res) => {
       return res.status(400).json({ message: 'roomId is required' });
     }
 
+
     const user = await User.findOne({ rollNumber });
     if (!user) {
       return res.status(404).json({ message: 'User not found with that roll number' });
@@ -58,13 +59,15 @@ exports.createBooking = async (req, res) => {
 
     await booking.save();
 
-    user.currentBooking = booking._id;
+  /*   user.currentBooking = booking._id;
     user.previousBookings.push(booking._id);
-    await user.save();
+    await user.save(); */
 
     // Update room with current occupant and bed status
     const updateData = {
-      currentOccupant: user._id
+      $push: { bookings: booking._id },
+      currentOccupant: user._id,
+      $set: {}
     };
 
     if (room.roomType === 'Double') {
@@ -77,9 +80,13 @@ exports.createBooking = async (req, res) => {
       $set: updateData
     });
 
+    user.currentBooking = booking._id;
+    user.previousBookings.push(booking._id);
+    await user.save();
+
     const populatedBooking = await Booking.findById(booking._id)
-      .populate('roomId', 'roomNumber floor wing roomType roomFacilities')
-      .populate('rollNumber', 'name email rollNumber');
+      .populate('room', 'roomNumber floor wing roomType roomFacilities')
+      .populate('userId', 'name email rollNumber');
 
     res.status(201).json(populatedBooking);
   } catch (err) {
