@@ -172,3 +172,28 @@ exports.getAdminRooms = async (req, res) => {
     });
   }
 };
+
+// Get room details with populated bookings
+exports.getRoomDetails = async (req, res) => {
+  try {
+    const room = await Room.find()
+      .populate({
+        path: 'bookings',
+        select: 'checkInDate checkOutDate status paymentStatus',
+        populate: {
+          path: 'user',
+          select: 'fullName email rollNumber'
+        }
+      })
+      .populate('currentOccupant', 'fullName email')
+      .populate('hostel', 'name');
+
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+
+    res.status(200).json(room);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};

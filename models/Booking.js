@@ -10,7 +10,9 @@ const BookingSchema = new Schema({
   bedPosition: { type: String, enum: ['Top', 'Bottom'], required: function() {
     return this.roomType === 'Double';
   }},
-  status: { type: String, enum: ['pending', 'confirmed', 'cancelled'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'confirmed', 'cancelled'], default: 'confirmed' },
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  room: { type: Schema.Types.ObjectId, ref: 'Room', required: true },
   payment: {
     amount: { type: Number, required: true },
     method: { type: String, enum: ['Bank Transfer', 'Momo'], required: true },
