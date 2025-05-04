@@ -85,8 +85,8 @@ exports.createBooking = async (req, res) => {
     await user.save();
 
     const populatedBooking = await Booking.findById(booking._id)
-      .populate('room', 'roomNumber floor wing roomType roomFacilities')
-      .populate('userId', 'name email rollNumber');
+      .populate('roomId', 'roomNumber floor wing roomType roomFacilities')
+      .populate('rollNumber', 'name email rollNumber');
 
     res.status(201).json(populatedBooking);
   } catch (err) {
