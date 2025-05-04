@@ -137,16 +137,38 @@ exports.getRoomAvailability = async (req, res) => {
   }
 };
 
+// exports.getAdminRooms = async (req, res) => {
+//   try {
+//     const rooms = await Room.find()
+//       .populate('hostel', 'name')
+//       .lean(); // Add .lean() for better performance
+
+//     if (!rooms || rooms.length === 0) {
+//       return res.status(404).json({ message: 'No rooms found' });
+//     }
+
+//     res.status(200).json(rooms);
+//   } catch (err) {
+//     console.error('Error fetching rooms:', err);
+//     res.status(500).json({ 
+//       message: 'Server error fetching rooms',
+//       error: process.env.NODE_ENV === 'development' ? err.message : undefined
+//     });
+//   }
+// };
+
 exports.getAdminRooms = async (req, res) => {
   try {
     const rooms = await Room.find()
-      .populate('currentOccupant', 'fullName email rollNumber')
-      .populate('beds.top.occupant', 'fullName email rollNumber')
-      .populate('beds.bottom.occupant', 'fullName email rollNumber')
-      .populate('hostel', 'name');
-
+      .populate('hostel', 'name') // Only populate hostel
+      .select('-beds.top.occupant -beds.bottom.occupant -currentOccupant'); // Exclude user references
+    
     res.status(200).json(rooms);
   } catch (err) {
-    res.status(500).json({ message: 'Server error fetching rooms' });
+    console.error('Error in getAdminRooms:', err);
+    res.status(500).json({ 
+      message: 'Server error fetching rooms',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
