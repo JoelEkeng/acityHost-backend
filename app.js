@@ -31,7 +31,7 @@ app.use('/api', ticketRoutes);
 app.use('/api', hostelRoutes);
 app.use('/api', roomRoutes);
 app.use('/api', bookingRoutes);
-app.use('api/payments', paymentRoutes);
+app.use('/api/payments', paymentRoutes);
 
 app.get('/', (req, res) => {
   res.send('ACity Hostel Management System API is running.');
