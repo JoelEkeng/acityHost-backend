@@ -2,6 +2,7 @@
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
+const Booking = require('../models/Booking'); // Assuming Booking is your room booking model
 
 router.post('/verify-payment', async (req, res) => {
   const { reference } = req.body;
@@ -16,8 +17,9 @@ router.post('/verify-payment', async (req, res) => {
     const paymentData = response.data.data;
 
     if (paymentData.status === 'success') {
+      // Create payment record
       const newPayment = new Payment({
-        userId: paymentData.metadata?.userId, // This depends on your Paystack `metadata`
+        userId: paymentData.metadata?.userId,
         amount: paymentData.amount,
         reference: paymentData.reference,
         status: paymentData.status,
@@ -27,7 +29,30 @@ router.post('/verify-payment', async (req, res) => {
       });
 
       await newPayment.save();
-      return res.status(200).json({ success: true, message: 'Payment verified and saved', payment: newPayment });
+
+      // Step 2: Book the room
+      const bookingData = {
+        userId: paymentData.metadata?.userId,
+        roomId: paymentData.metadata?.roomId,  // Assuming you store roomId in metadata
+        bookingDate: new Date(),
+        startTime: new Date(),
+        endTime: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        payment: {
+          amount: paymentData.amount,
+          method: 'Paystack',
+          transactionId: paymentData.reference,
+          paid: true,
+        },
+      };
+
+      // Assuming you have a Booking model to handle room booking
+      const booking = new Booking(bookingData);
+      await booking.save();
+
+      // Optionally, mark room as "booked" if you have a room status field
+      await Room.updateOne({ _id: bookingData.roomId }, { $set: { status: 'booked' } });
+
+      return res.status(200).json({ success: true, message: 'Payment verified, room booked', payment: newPayment, booking });
     } else {
       return res.status(400).json({ success: false, message: 'Transaction not successful' });
     }
