@@ -70,9 +70,9 @@ router.post('/initiate-payment', async (req, res) => {
       'https://api.paystack.co/transaction/initialize',
       {
         email,
-        amount: amount * 100, // GHS to pesewas
+        amount: amount * 100, 
         metadata,
-        callback_url: 'https://yourdomain.com/payment-success',
+        callback_url: 'http://localhost:3000/booking/payment-success',
       },
       {
         headers: {
@@ -81,6 +81,8 @@ router.post('/initiate-payment', async (req, res) => {
         }
       }
     );
+
+    console.log('Paystack init response:', response.data);
 
     res.status(200).json({ url: response.data.data.authorization_url });
   } catch (error) {
