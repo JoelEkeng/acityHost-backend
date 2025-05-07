@@ -11,6 +11,7 @@ const hostelRoutes = require('./routes/hostelRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const stats = require('./routes/stats');
 
 
 const app = express();
@@ -32,6 +33,7 @@ app.use('/api', hostelRoutes);
 app.use('/api', roomRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/stats', stats)
 
 app.get('/', (req, res) => {
   res.send('ACity Hostel Management System API is running.');
