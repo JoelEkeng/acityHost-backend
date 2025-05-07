@@ -65,9 +65,8 @@ exports.createBooking = async (req, res) => {
 
     // Update room with current occupant and bed status
     const updateData = {
-      $push: { bookings: booking._id },
       currentOccupant: user._id,
-      $set: {}
+      $push: { bookings: booking._id }
     };
 
     if (room.roomType === 'Double') {
