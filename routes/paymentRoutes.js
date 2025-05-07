@@ -1,3 +1,4 @@
+// routes/payments.js
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
@@ -35,3 +36,5 @@ router.post('/verify-payment', async (req, res) => {
     return res.status(500).json({ success: false, message: 'Payment verification failed', error: err.message });
   }
 });
+
+module.exports = router;
