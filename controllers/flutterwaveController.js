@@ -1,99 +1,110 @@
-const flutterwave = require('flutterwave-node-v3');
-// Initialize Flutterwave with proper error handling
-let flw;
-try {
-  flw = new flutterwave(
-    process.env.FLW_PUBLIC_KEY, 
-    process.env.FLW_SECRET_KEY
-  );
-} catch (err) {
-  console.error('Flutterwave initialization failed:', err);
-  throw new Error('Payment system configuration error');
-}
+const Flutterwave = require('flutterwave-node-v3');
 const Booking = require('../models/Booking');
-exports.initiatePayment = async (req, res) => {
-    try {
-      // Validate required fields
-      const { amount, email, fullName, metadata } = req.body;
-      
-      if (!amount || !email || !fullName) {
-        return res.status(400).json({
-          success: false,
-          message: 'Amount, email and name are required'
-        });
-      }
-  
-      // Create payload
-      const payload = {
-        tx_ref: `TXN-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        amount: parseFloat(amount),
-        currency: 'GHS', // Using Ghanaian Cedi
-        payment_options: 'card,mobilemoney,ussd',
-        redirect_url: process.env.FLW_CALLBACK_URL || 'https://yourdomain.com/payment-callback',
-        customer: {
-          email,
-          phonenumber: metadata?.phone || '',
-          fullName
-        },
-        customizations: {
-          title: 'Hostel Booking Payment',
-          description: 'Payment for room reservation',
-          logo: 'https://yourdomain.com/logo.png'
-        },
-        meta: metadata || {}
-      };
-  
-      // Initiate payment
-      const response = await flw.Payment.initiate(payload);
-      
-      if (!response || response.status !== 'success') {
-        throw new Error(response?.message || 'Failed to initiate payment');
-      }
-  
-      res.json({
-        success: true,
-        data: response.data
-      });
-  
-    } catch (err) {
-      console.error('Payment Initiation Error:', {
-        error: err.message,
-        stack: err.stack,
-        body: req.body
-      });
-      
-      res.status(500).json({
-        success: false,
-        message: 'Payment initiation failed',
-        error: process.env.NODE_ENV === 'development' ? err.message : undefined
-      });
+const crypto = require('crypto');
+
+// Initialize Flutterwave
+const flw = new Flutterwave(
+  process.env.FLW_PUBLIC_KEY,
+  process.env.FLW_SECRET_KEY
+);
+
+// Webhook verification middleware
+exports.verifyWebhook = (req, res, next) => {
+  try {
+    const secretHash = process.env.FLW_WEBHOOK_SECRET;
+    const signature = req.headers['verif-hash'];
+    
+    if (!signature || signature !== secretHash) {
+      return res.status(401).json({ error: 'Unauthorized webhook call' });
     }
-  };
-exports.verifyPayment = async (req, res) => {
-    try {
-      const response = await flw.Transaction.verify({ id: req.body.transaction_id });
+    
+    next();
+  } catch (err) {
+    console.error('Webhook verification error:', err);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+};
+
+// Webhook handler
+exports.handleWebhook = async (req, res) => {
+  try {
+    const payload = req.body;
+    
+    // Verify the event is a payment completion
+    if (payload.event === 'charge.completed' && payload.data.status === 'successful') {
+      const transactionId = payload.data.tx_ref;
       
-      if (response.status === 'successful') {
-        await Booking.findOneAndUpdate(
-          { 'payment.transactionId': req.body.transaction_id },
-          { 
-            status: 'confirmed',
-            'payment.paid': true,
-            'payment.verifiedAt': new Date(),
-            'payment.method': 'Momo' // Ensure it matches schema
-          }
-        );
+      // Verify the transaction with Flutterwave
+      const verification = await flw.Transaction.verify({ id: payload.data.id });
+      
+      if (verification.status !== 'successful') {
+        throw new Error('Transaction verification failed');
       }
       
-      res.json({ 
-        paid: response.status === 'successful',
-        transaction: response 
-      });
-    } catch (err) {
-      console.error('Verification error:', err);
-      res.status(500).json({ 
-        error: err.message,
-        details: process.env.NODE_ENV === 'development' ? err.stack : undefined
-      });
+      // Update the booking status
+      const updatedBooking = await Booking.findOneAndUpdate(
+        { 'payment.transactionId': transactionId },
+        {
+          status: 'confirmed',
+          'payment.paid': true,
+          'payment.verifiedAt': new Date(),
+          'payment.method': 'Momo' // Map to your schema
+        },
+        { new: true }
+      );
+      
+      if (!updatedBooking) {
+        throw new Error('Booking not found for transaction');
+      }
+      
+      console.log('Booking confirmed:', updatedBooking._id);
     }
-  };
+    
+    res.status(200).send('Webhook processed');
+  } catch (err) {
+    console.error('Webhook processing error:', {
+      error: err.message,
+      payload: req.body
+    });
+    res.status(400).json({ error: 'Webhook processing failed' });
+  }
+};
+
+// Generate payment link (alternative to direct initiation)
+exports.generatePaymentLink = async (req, res) => {
+  try {
+    const { amount, email, name, bookingId } = req.body;
+    
+    const payload = {
+      tx_ref: `BOOKING-${bookingId}-${Date.now()}`,
+      amount: parseFloat(amount),
+      currency: 'GHS',
+      payment_options: 'card,mobilemoney,ussd',
+      redirect_url: `${process.env.FRONTEND_URL}/booking/confirmation`,
+      customer: {
+        email,
+        name,
+      },
+      customizations: {
+        title: 'Hostel Booking Payment',
+        description: `Payment for booking ${bookingId}`,
+      },
+      meta: {
+        bookingId
+      }
+    };
+    
+    const response = await flw.PaymentLink.create(payload);
+    
+    res.json({
+      success: true,
+      paymentLink: response.data.link
+    });
+  } catch (err) {
+    console.error('Payment link generation error:', err);
+    res.status(500).json({ 
+      error: 'Payment link generation failed',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};

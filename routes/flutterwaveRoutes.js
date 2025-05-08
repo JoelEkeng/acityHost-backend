@@ -1,8 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { initiatePayment, verifyPayment } = require('../controllers/flutterwaveController');
+const {
+  verifyWebhook,
+  handleWebhook,
+  generatePaymentLink
+} = require('../controllers/flutterwaveController');
 
-router.post('/initiate', initiatePayment);
-router.post('/verify', verifyPayment);
+// Webhook endpoint (must be POST)
+router.post('/webhook', verifyWebhook, handleWebhook);
+
+// Payment link generation
+router.post('/generate-link', generatePaymentLink);
 
 module.exports = router;
