@@ -13,7 +13,7 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const stats = require('./routes/stats');
 const flutterwaveRouter = require('./routes/flutterwaveRoutes');
-const webhookRoutes = require('./routes/webhook');
+const webhookRoutes = require('./routes/webhooks');
 
 const app = express();
 const port = process.env.PORT || 5000;
