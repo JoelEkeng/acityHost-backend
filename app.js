@@ -33,7 +33,7 @@ app.use('/api', ticketRoutes);
 app.use('/api', hostelRoutes);
 app.use('/api', roomRoutes);
 app.use('/api', bookingRoutes);
-app.use('/api/payments', paymentRoutes);
+app.use('/api', paymentRoutes);
 app.use('/api/stats', stats)
 app.use('/api/flutterwave', flutterwaveRouter);
 app.use('/webhook', webhookRoutes);
