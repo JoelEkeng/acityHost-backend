@@ -14,7 +14,7 @@ const BookingSchema = new Schema({
 
   payment: {
     amount: { type: Number, required: true },
-    method: { type: String, enum: ['Bank Transfer', 'Momo'], required: true },
+    method: { type: String, enum: ['Bank Transfer', 'Momo', 'Flutterwave'], required: true },
     transactionId: { type: String }, 
     paid: { type: Boolean, default: false }
   }
