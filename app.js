@@ -13,6 +13,7 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const stats = require('./routes/stats');
 const flutterwaveRouter = require('./routes/flutterwaveRoutes');
+const webhookRoutes = require('./routes/webhook');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -35,6 +36,7 @@ app.use('/api', bookingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/stats', stats)
 app.use('/api/flutterwave', flutterwaveRouter);
+app.use('/webhook', webhookRoutes);
 
 app.get('/', (req, res) => {
   res.send('ACity Hostel Management System API is running.');
