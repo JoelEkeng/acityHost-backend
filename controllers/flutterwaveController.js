@@ -20,10 +20,26 @@ exports.initiatePayment = async (req, res) => {
 };
 
 exports.verifyPayment = async (req, res) => {
-  try {
-    const response = await flw.Transaction.verify({ id: req.body.transaction_id });
-    res.json({ paid: response.status === 'successful' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+    try {
+      const response = await flw.Transaction.verify({ id: req.body.transaction_id });
+      
+      if (response.status === 'successful') {
+        // Update the booking status
+        await Booking.findOneAndUpdate(
+          { 'payment.transactionId': req.body.transaction_id },
+          { 
+            status: 'confirmed',
+            'payment.paid': true,
+            'payment.verifiedAt': new Date()
+          }
+        );
+      }
+      
+      res.json({ 
+        paid: response.status === 'successful',
+        transaction: response 
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  };
